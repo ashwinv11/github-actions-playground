@@ -115,6 +115,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       continue-on-error: true
       with:
+        path: .
         name: test2.txt
 
   cleanup:
@@ -127,4 +128,4 @@ jobs:
         with:
           log_level: 'debug'
           min_bytes: '0'
-          pattern: '\.tar'
+          pattern: '\-image'
