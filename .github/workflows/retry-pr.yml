@@ -5,7 +5,7 @@ on:
     types: [created]
 
 jobs:
-  comment:
+  retry-last-job:
     runs-on: ubuntu-20.04
     if: ${{ github.event_name == 'issue_comment' && contains(github.event.comment.body, 'retest this please') }}
     steps:
@@ -13,3 +13,4 @@ jobs:
         with:
           script: |
             console.log('context', context)
+            console.log('pr context', context.payload.issue.pull_request)
