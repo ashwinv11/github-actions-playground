@@ -1,0 +1,15 @@
+name: Retry PR Job
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  comment:
+    runs-on: ubuntu-20.04
+    if: ${{ github.event_name == 'issue_comment' && contains(github.event.comment.body, 'retest this please' }}
+    steps:
+      - uses: actions/github-script@v5
+        with:
+          script: |
+            console.log('context', context)
