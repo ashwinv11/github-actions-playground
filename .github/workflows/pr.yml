@@ -2,8 +2,6 @@ name: Test PR
 
 on:
   pull_request:
-  issue_comment:
-    types: [created]
 
 concurrency:
   group: ${{ github.head_ref }}
@@ -20,7 +18,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-20.04
-    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && contains(github.event.comment.body, 'retest this please')) }}
     steps:
     - name: Git Checkout
       uses: actions/checkout@v2
@@ -51,12 +48,11 @@ jobs:
       with:
         name: test-hello-world-image
         path: /tmp/test-hello-world-image.tar
-        retention-days: 7
+        retention-days: 1
 
   lint:
     runs-on: ubuntu-20.04
     needs: build
-    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && contains(github.event.comment.body, 'retest this please')) }}
     steps:
     - name: Git Checkout
       uses: actions/checkout@v2
@@ -79,12 +75,11 @@ jobs:
     - name: Run Lint
       run: |
         docker load --input /tmp/test-hello-world-image.tar
-        docker run --rm ${IMAGE_NAME} echo "Hello from lint"
+        docker run --rm ${IMAGE_NAME}:${GIT_REF} echo "Hello from lint"
 
   test:
     runs-on: ubuntu-20.04
     needs: build
-    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && contains(github.event.comment.body, 'retest this please')) }}
     steps:
     - name: Git Checkout
       uses: actions/checkout@v2
@@ -108,17 +103,24 @@ jobs:
     - name: Run Tests
       run: |
         docker load --input /tmp/test-hello-world-image.tar
-        docker run ${IMAGE_NAME} echo "Hello from test" > test2.txt
-        docker run --rm ${IMAGE_NAME} ls -al
+        docker run ${IMAGE_NAME}:${GIT_REF} echo "Hello from test" > test2.txt
+        docker run --rm ${IMAGE_NAME}:${GIT_REF} ls -al
         ls -al
 
-    - name: Check for artifact output
-      if: always()
-      run: |
-        ls
+    - uses: actions/upload-artifact@v2
+      continue-on-error: true
+      with:
+        path: .
+        name: test2.txt
 
-    # - uses: actions/upload-artifact@v2
-    #   if: always()
-    #   with:
-    #     name: coverage
-    #     path: htmlcov
+  cleanup:
+    needs: [lint, test]
+    continue-on-error: true
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Delete artifacts
+        uses: jimschubert/delete-artifacts-action@v1
+        with:
+          log_level: 'debug'
+          min_bytes: '0'
+          pattern: '\-image'
