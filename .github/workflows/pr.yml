@@ -79,7 +79,7 @@ jobs:
     - name: Run Lint
       run: |
         docker load --input /tmp/test-hello-world-image.tar
-        docker run --rm ${IMAGE_NAME} echo "Hello from lint"
+        docker run --rm ${IMAGE_NAME}:${GIT_REF} echo "Hello from lint"
 
   test:
     runs-on: ubuntu-20.04
@@ -108,8 +108,8 @@ jobs:
     - name: Run Tests
       run: |
         docker load --input /tmp/test-hello-world-image.tar
-        docker run ${IMAGE_NAME} echo "Hello from test" > test2.txt
-        docker run --rm ${IMAGE_NAME} ls -al
+        docker run ${IMAGE_NAME}:${GIT_REF} echo "Hello from test" > test2.txt
+        docker run --rm ${IMAGE_NAME}:${GIT_REF} ls -al
         ls -al
 
     - name: Check for artifact output
