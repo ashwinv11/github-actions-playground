@@ -6,15 +6,15 @@ on:
     types: [created]
 
 concurrency:
-  group: ${{ github.ref }}
+  group: ${{ github.head_ref }}
   cancel-in-progress: true
 
 env:
   DOCKER_BUILDKIT: 1
   COMPOSE_DOCKER_CLI_BUILD: 1
-  GIT_REF: ${{ github.ref }}
-  OPT_TAG: pr-${{ github.ref }}
-  GITHUB_HEAD_REF: ${{ github.ref }}
+  GIT_REF: ${{ github.head_ref }}
+  OPT_TAG: pr-${{ github.head_ref }}
+  GITHUB_HEAD_REF: ${{ github.head_ref }}
   IMAGE_NAME: test-hello-world
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
     - name: Git Checkout
       uses: actions/checkout@v2
       with:
-        ref: ${{ github.sha }}
+        ref: ${{ github.event.pull_request.head.sha }}
 
     - name: Set environment variable(s)
       run: |
@@ -61,7 +61,7 @@ jobs:
     - name: Git Checkout
       uses: actions/checkout@v2
       with:
-        ref: ${{ github.sha }}
+        ref: ${{ github.event.pull_request.head.sha }}
 
     - name: Set environment variable(s)
       run: |
@@ -89,7 +89,7 @@ jobs:
     - name: Git Checkout
       uses: actions/checkout@v2
       with:
-        ref: ${{ github.sha }}
+        ref: ${{ github.event.pull_request.head.sha }}
 
     - name: Set environment variable(s)
       run: |
@@ -117,8 +117,14 @@ jobs:
       with:
         name: test2.txt
 
-    # - uses: actions/upload-artifact@v2
-    #   if: always()
-    #   with:
-    #     name: coverage
-    #     path: htmlcov
+  cleanup:
+    needs: [lint, test]
+    continue-on-error: true
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Delete artifacts
+        uses: jimschubert/delete-artifacts-action@v1
+        with:
+          log_level: 'debug'
+          min_bytes: '0'
+          pattern: '\.tar'
