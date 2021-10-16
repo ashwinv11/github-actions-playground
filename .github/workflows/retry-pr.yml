@@ -7,7 +7,7 @@ on:
 jobs:
   comment:
     runs-on: ubuntu-20.04
-    if: ${{ github.event_name == 'issue_comment' && contains(github.event.comment.body, 'retest this please' }}
+    if: ${{ github.event_name == 'issue_comment' && contains(github.event.comment.body, "retest this please" }}
     steps:
       - uses: actions/github-script@v5
         with:
