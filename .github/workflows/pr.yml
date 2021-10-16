@@ -1,0 +1,124 @@
+name: Test PR
+
+on:
+  pull_request:
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+  GIT_REF: ${{ github.head_ref }}
+  OPT_TAG: pr-${{ github.head_ref }}
+  GITHUB_HEAD_REF: ${{ github.head_ref }}
+  IMAGE_NAME: test-hello-world
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && contains(github.event.comment.body, 'retest this please')) }}
+    steps:
+    - name: Git Checkout
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Set environment variable(s)
+      run: |
+        echo "GIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build & Tag Image
+      id: docker_build
+      uses: docker/build-push-action@v2
+      with:
+        push: false
+        context: .
+        tags: |
+          ${{ env.IMAGE_NAME }}:${{ env.GIT_REF }}
+          ${{ env.IMAGE_NAME }}:${{ env.GIT_REF }}-${{ env.GIT_SHA }}
+          ${{ env.IMAGE_NAME }}:${{ env.GIT_SHA }}
+        outputs: type=docker,dest=/tmp/test-hello-world-image.tar
+
+    - name: Upload image artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-hello-world-image
+        path: /tmp/test-hello-world-image.tar
+        retention-days: 7
+
+  lint:
+    runs-on: ubuntu-20.04
+    needs: build
+    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && contains(github.event.comment.body, 'retest this please')) }}
+    steps:
+    - name: Git Checkout
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Set environment variable(s)
+      run: |
+        echo "GIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Download image artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: test-hello-world-image
+        path: /tmp
+
+    - name: Run Lint
+      run: |
+        docker load --input /tmp/test-hello-world-image.tar
+        docker run --rm ${IMAGE_NAME} echo "Hello from lint"
+
+  test:
+    runs-on: ubuntu-20.04
+    needs: build
+    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'issue_comment' && contains(github.event.comment.body, 'retest this please')) }}
+    steps:
+    - name: Git Checkout
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Set environment variable(s)
+      run: |
+        echo "GIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        echo "GIT_COMMITTED_AT=$(git show -s --format=%ct $GIT_COMMIT_SHA)" >> $GITHUB_ENV
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Download image artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: test-hello-world-image
+        path: /tmp
+
+    - name: Run Tests
+      run: |
+        docker load --input /tmp/test-hello-world-image.tar
+        docker run ${IMAGE_NAME} echo "Hello from test" > test2.txt
+        docker run --rm ${IMAGE_NAME} ls -al
+        ls -al
+
+    - name: Check for artifact output
+      if: always()
+      run: |
+        ls
+
+    # - uses: actions/upload-artifact@v2
+    #   if: always()
+    #   with:
+    #     name: coverage
+    #     path: htmlcov
