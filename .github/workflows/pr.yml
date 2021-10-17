@@ -86,7 +86,7 @@ jobs:
 
     - name: Upload Lint Results
       uses: actions/upload-artifact@v2
-      if: failure()
+      if: always()
       with:
         name: lint-report.txt
         path: ${GITHUB_WORKSPACE}/lint-report.txt
