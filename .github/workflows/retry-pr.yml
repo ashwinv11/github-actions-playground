@@ -35,7 +35,7 @@ jobs:
             const res = await github.rest.checks.createSuite({
               owner: repoOwner,
               repo: repoName,
-              ref: headSHA,
+              head_sha: headSHA,
             });
 
             console.log('res', res)
