@@ -82,7 +82,14 @@ jobs:
     - name: Run Lint
       run: |
         docker load --input /tmp/images/image.tar
-        docker run --rm ${IMAGE_NAME}:${GIT_REF} echo "Hello from lint"
+        docker run --rm ${IMAGE_NAME}:${GIT_REF} make
+
+    - name: Upload Lint Results
+      uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: lint-report.txt
+        path: ${GITHUB_WORKSPACE}/lint-report.txt
 
   # test:
   #   runs-on: ubuntu-20.04
