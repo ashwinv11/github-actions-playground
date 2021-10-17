@@ -16,7 +16,7 @@ jobs:
             const repoName = context.payload.repository.name
             const repoOwner = context.payload.repository.owner.login
 
-            console.log({ prID, repoName, repoOwner })
+            console.log({ prId, repoName, repoOwner })
 
             const result = await github.rest.pulls.get({
               owner: repoOwner,
