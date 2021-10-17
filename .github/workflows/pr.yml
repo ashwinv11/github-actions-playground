@@ -1,4 +1,4 @@
-name: Test PR
+name: PR
 
 on: pull_request
 
@@ -73,6 +73,13 @@ jobs:
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
+
+    - uses: actions/cache@v2
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ hashFiles('Dockerfile') }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
 
     - name: Download image artifact
       uses: actions/download-artifact@v2
