@@ -49,6 +49,7 @@ jobs:
           ${{ env.IMAGE_NAME }}:${{ env.GIT_SHA }}
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+        outputs: type=docker,dest=/tmp/.buildx-cache/image.tar
 
   lint:
     runs-on: ubuntu-20.04
@@ -76,6 +77,7 @@ jobs:
     - name: Run Lint
       run: |
         ls /tmp/.buildx-cache
+        docker load --input /tmp/.buildx-cache/image.tar
         docker run --rm ${IMAGE_NAME}:${GIT_REF} echo "Hello from lint"
 
   # test:
