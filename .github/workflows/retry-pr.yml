@@ -32,7 +32,9 @@ jobs:
               ref: headSHA,
             });
 
-            console.log('result', getCheckSuitesResult.data)
+            const checkSuiteApps = getCheckSuitesResult.data.check_suites.map(suite => suite.app)
+
+            console.log('result', checkSuiteApps)
 
             // console.log('context', context)
             // console.log('pr context', context.payload.issue.pull_request)
