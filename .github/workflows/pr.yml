@@ -30,13 +30,6 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
 
-    - uses: actions/cache@v2
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ hashFiles('Dockerfile') }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-
     - name: Build & Tag Image
       id: docker_build
       uses: docker/build-push-action@v2
@@ -49,14 +42,6 @@ jobs:
           ${{ env.IMAGE_NAME }}:${{ env.GIT_SHA }}
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache
-        outputs: type=docker,dest=/tmp/test-hello-world-image.tar
-
-    - name: Upload image artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: test-hello-world-image
-        path: /tmp/test-hello-world-image.tar
-        retention-days: 1
 
   lint:
     runs-on: ubuntu-20.04
@@ -81,62 +66,55 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-buildx-
 
-    - name: Download image artifact
-      uses: actions/download-artifact@v2
-      with:
-        name: test-hello-world-image
-        path: /tmp
-
     - name: Run Lint
       run: |
         ls /tmp/.buildx-cache
-        docker load --input /tmp/test-hello-world-image.tar
         docker run --rm ${IMAGE_NAME}:${GIT_REF} echo "Hello from lint"
 
-  test:
-    runs-on: ubuntu-20.04
-    needs: build
-    steps:
-    - name: Git Checkout
-      uses: actions/checkout@v2
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
+  # test:
+  #   runs-on: ubuntu-20.04
+  #   needs: build
+  #   steps:
+  #   - name: Git Checkout
+  #     uses: actions/checkout@v2
+  #     with:
+  #       ref: ${{ github.event.pull_request.head.sha }}
 
-    - name: Set environment variable(s)
-      run: |
-        echo "GIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-        echo "GIT_COMMITTED_AT=$(git show -s --format=%ct $GIT_COMMIT_SHA)" >> $GITHUB_ENV
+  #   - name: Set environment variable(s)
+  #     run: |
+  #       echo "GIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+  #       echo "GIT_COMMITTED_AT=$(git show -s --format=%ct $GIT_COMMIT_SHA)" >> $GITHUB_ENV
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+  #   - name: Set up Docker Buildx
+  #     uses: docker/setup-buildx-action@v1
 
-    - name: Download image artifact
-      uses: actions/download-artifact@v2
-      with:
-        name: test-hello-world-image
-        path: /tmp
+  #   - name: Download image artifact
+  #     uses: actions/download-artifact@v2
+  #     with:
+  #       name: test-hello-world-image
+  #       path: /tmp
 
-    - name: Run Tests
-      run: |
-        docker load --input /tmp/test-hello-world-image.tar
-        docker run ${IMAGE_NAME}:${GIT_REF} echo "Hello from test" > test2.txt
-        docker run --rm ${IMAGE_NAME}:${GIT_REF} ls -al
-        ls -al
+  #   - name: Run Tests
+  #     run: |
+  #       docker load --input /tmp/test-hello-world-image.tar
+  #       docker run ${IMAGE_NAME}:${GIT_REF} echo "Hello from test" > test2.txt
+  #       docker run --rm ${IMAGE_NAME}:${GIT_REF} ls -al
+  #       ls -al
 
-    - uses: actions/upload-artifact@v2
-      continue-on-error: true
-      with:
-        path: .
-        name: test2.txt
+  #   - uses: actions/upload-artifact@v2
+  #     continue-on-error: true
+  #     with:
+  #       path: .
+  #       name: test2.txt
 
-  cleanup:
-    needs: [lint, test]
-    continue-on-error: true
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Delete artifacts
-        uses: jimschubert/delete-artifacts-action@v1
-        with:
-          log_level: 'debug'
-          min_bytes: '0'
-          pattern: '\-image'
+  # cleanup:
+  #   needs: [lint, test]
+  #   continue-on-error: true
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - name: Delete artifacts
+  #       uses: jimschubert/delete-artifacts-action@v1
+  #       with:
+  #         log_level: 'debug'
+  #         min_bytes: '0'
+  #         pattern: '\-image'
