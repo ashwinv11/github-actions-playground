@@ -1,7 +1,7 @@
 name: Retry Last PR Job
 
 on:
-  pull_request_review_comment:
+  issue_comment:
     types: [created]
 
 jobs:
@@ -12,7 +12,6 @@ jobs:
       - uses: actions/github-script@v5
         with:
           script: |
-            console.log('context', context)
             const prId = context.payload.issue.pull_request.url.split(`/pulls/`).pop()
             const repoName = context.payload.repository.name
             const repoOwner = context.payload.repository.owner.login
