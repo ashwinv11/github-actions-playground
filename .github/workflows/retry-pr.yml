@@ -34,8 +34,10 @@ jobs:
 
             const githubActionsCheckSuiteId = getCheckSuitesResult.data.check_suites.filter(suite => suite.app.slug === 'github-actions')[0].id
 
-            github.rest.checks.rerequestSuite({
+            const res = await github.rest.checks.rerequestSuite({
               owner: repoOwner,
               repo: repoName,
               check_suite_id: githubActionsCheckSuiteId,
             });
+
+            console.log('res', res)
