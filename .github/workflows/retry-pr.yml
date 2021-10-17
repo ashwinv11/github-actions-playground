@@ -18,13 +18,21 @@ jobs:
 
             console.log({ prId, repoName, repoOwner })
 
-            const result = await github.rest.pulls.get({
+            const getPullRequestResult = await github.rest.pulls.get({
               owner: repoOwner,
               repo: repoName,
               pull_number: prId,
             });
 
-            console.log('result', result)
+            const headSHA = getPullRequestResult.data.head.sha
+
+            const getCheckSuitesResult = await github.rest.checks.listSuitesForRef({
+              owner: repoOwner,
+              repo: repoName,
+              ref: headSHA,
+            });
+
+            console.log('result', getCheckSuitesResult.data)
 
             // console.log('context', context)
             // console.log('pr context', context.payload.issue.pull_request)
