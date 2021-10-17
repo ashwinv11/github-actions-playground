@@ -32,10 +32,16 @@ jobs:
               throw new Error(`Could not get head SHA: ${headSHA}`)
             }
 
-            const res = await github.rest.checks.createSuite({
+            const newCheckSuiteResult = await github.rest.checks.createSuite({
               owner: repoOwner,
               repo: repoName,
               head_sha: headSHA,
             });
 
-            console.log('res', res)
+            const newCheckSuiteId = newCheckSuiteResult.data.id
+
+            github.rest.checks.rerequestSuite({
+              owner: repoOwner,
+              repo: repoName,
+              check_suite_id: newCheckSuiteId,
+            });
