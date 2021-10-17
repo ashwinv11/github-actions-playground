@@ -1,17 +1,18 @@
 name: Retry Last PR Job
 
 on:
-  issue_comment:
+  pull_request_review_comment:
     types: [created]
 
 jobs:
   retry-last-pr-job:
     runs-on: ubuntu-20.04
-    if: ${{ github.event_name == 'issue_comment' && contains(github.event.comment.body, 'retest this please') }}
+    if: ${{ contains(github.event.comment.body, 'retest this please') }}
     steps:
       - uses: actions/github-script@v5
         with:
           script: |
+            console.log('context', context)
             const prId = context.payload.issue.pull_request.url.split(`/pulls/`).pop()
             const repoName = context.payload.repository.name
             const repoOwner = context.payload.repository.owner.login
@@ -32,16 +33,20 @@ jobs:
               throw new Error(`Could not get head SHA: ${headSHA}`)
             }
 
-            const newCheckSuiteResult = await github.rest.checks.createSuite({
+            const getCheckSuitesResult = await github.rest.checks.listSuitesForRef({
               owner: repoOwner,
               repo: repoName,
-              head_sha: headSHA,
+              ref: headSHA,
             });
 
-            const newCheckSuiteId = newCheckSuiteResult.data.id
+            const githubActionsCheckSuiteId = getCheckSuitesResult.data.check_suites.filter(suite => suite.app.slug === 'github-actions')[0].id
+
+            if(!githubActionsCheckSuiteId) {
+              throw new Error(`Could not get last Check Suite Id: ${githubActionsCheckSuiteId}`)
+            }
 
             github.rest.checks.rerequestSuite({
               owner: repoOwner,
               repo: repoName,
-              check_suite_id: newCheckSuiteId,
+              check_suite_id: githubActionsCheckSuiteId,
             });
