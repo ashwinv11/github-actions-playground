@@ -48,7 +48,7 @@ jobs:
       with:
         name: test-hello-world-image
         path: /tmp/test-hello-world-image.tar
-        retention-days: 2
+        retention-days: 1
 
   lint:
     runs-on: ubuntu-20.04
