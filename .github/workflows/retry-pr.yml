@@ -1,16 +1,30 @@
-name: Retry PR Job
+name: Retry Last PR Job
 
 on:
   issue_comment:
     types: [created]
 
 jobs:
-  retry-last-job:
+  retry-last-pr-job:
     runs-on: ubuntu-20.04
     if: ${{ github.event_name == 'issue_comment' && contains(github.event.comment.body, 'retest this please') }}
     steps:
       - uses: actions/github-script@v5
         with:
           script: |
-            console.log('context', context)
-            console.log('pr context', context.payload.issue.pull_request)
+            const prId = context.payload.issue.pull_request.url.split(`/pulls`).pop()
+            const repoName = context.payload.repository.name
+            const repoOwner = context.payload.repository.owner.login
+
+            console.log({ prID, repoName, repoOwner })
+
+            const result = await github.rest.pulls.get({
+              owner: repoOwner,
+              repo: repoName,
+              pull_number: prId,
+            });
+
+            console.log('result', result)
+
+            // console.log('context', context)
+            // console.log('pr context', context.payload.issue.pull_request)
