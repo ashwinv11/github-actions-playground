@@ -32,20 +32,10 @@ jobs:
               throw new Error(`Could not get head SHA: ${headSHA}`)
             }
 
-            const getCheckSuitesResult = await github.rest.checks.listSuitesForRef({
+            const res = await github.rest.checks.createSuite({
               owner: repoOwner,
               repo: repoName,
               ref: headSHA,
             });
 
-            const githubActionsCheckSuiteId = getCheckSuitesResult.data.check_suites.filter(suite => suite.app.slug === 'github-actions')[0].id
-
-            if(!githubActionsCheckSuiteId) {
-              throw new Error(`Could not get last Check Suite Id: ${githubActionsCheckSuiteId}`)
-            }
-
-            github.rest.checks.rerequestSuite({
-              owner: repoOwner,
-              repo: repoName,
-              check_suite_id: githubActionsCheckSuiteId,
-            });
+            console.log('res', res)
