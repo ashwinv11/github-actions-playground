@@ -32,9 +32,10 @@ jobs:
               ref: headSHA,
             });
 
-            const checkSuiteApps = getCheckSuitesResult.data.check_suites.map(suite => suite.app)
+            const githubActionsCheckSuiteId = getCheckSuitesResult.data.check_suites.filter(suite => suite.app.slug === 'github-actions')[0].id
 
-            console.log('result', checkSuiteApps)
-
-            // console.log('context', context)
-            // console.log('pr context', context.payload.issue.pull_request)
+            github.rest.checks.rerequestSuite({
+              owner: repoOwner,
+              repo: repoName,
+              check_suite_id: githubActionsCheckSuiteId,
+            });
