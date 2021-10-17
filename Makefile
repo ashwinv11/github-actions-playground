@@ -7,4 +7,4 @@ test1:
 
 test2:
 	./scripts/test2.sh | tee lint-report.txt
-	exit ${PIPESTATUS[0]}
+	exit ${PIPESTATUS[1]}
