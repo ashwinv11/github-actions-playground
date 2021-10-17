@@ -12,11 +12,10 @@ jobs:
       - uses: actions/github-script@v5
         with:
           script: |
-            let prId = context.payload.issue.pull_request.url.split(`/pulls/`).pop()
+            const prId = context.payload.issue.pull_request.url.split(`/pulls/`).pop()
             const repoName = context.payload.repository.name
             const repoOwner = context.payload.repository.owner.login
 
-            prId = null
             if(!prId || !repoName || !repoOwner) {
               throw new Error(`Could not get prId: ${prId}, repName: ${repoName}, and/or repoOwner: ${repoOwner}`)
             }
@@ -29,6 +28,10 @@ jobs:
 
             const headSHA = getPullRequestResult.data.head.sha
 
+            if(!headSHA) {
+              throw new Error(`Could not get head SHA: ${headSHA}`)
+            }
+
             const getCheckSuitesResult = await github.rest.checks.listSuitesForRef({
               owner: repoOwner,
               repo: repoName,
@@ -37,10 +40,12 @@ jobs:
 
             const githubActionsCheckSuiteId = getCheckSuitesResult.data.check_suites.filter(suite => suite.app.slug === 'github-actions')[0].id
 
-            const res = await github.rest.checks.rerequestSuite({
+            if(!githubActionsCheckSuiteId) {
+              throw new Error(`Could not get last Check Suite Id: ${githubActionsCheckSuiteId}`)
+            }
+
+            github.rest.checks.rerequestSuite({
               owner: repoOwner,
               repo: repoName,
               check_suite_id: githubActionsCheckSuiteId,
             });
-
-            console.log('res', res)
