@@ -1,9 +1,7 @@
-default:
-	./scripts/test1.sh
-	./scripts/test2.sh
+default: test lint
 
-test1:
-	./scripts/test1.sh
+test:
+	./scripts/test.sh
 
-test2:
-	./scripts/test2.sh
+lint:
+	./scripts/lint.sh
