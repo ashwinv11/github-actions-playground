@@ -1,7 +1,6 @@
-name: Test PR
+name: PR
 
-on:
-  pull_request:
+on: pull_request
 
 concurrency:
   group: ${{ github.head_ref }}
@@ -31,6 +30,9 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
 
+    - name: Make images dir
+      run: mkdir /tmp/images
+
     - name: Build & Tag Image
       id: docker_build
       uses: docker/build-push-action@v2
@@ -41,14 +43,17 @@ jobs:
           ${{ env.IMAGE_NAME }}:${{ env.GIT_REF }}
           ${{ env.IMAGE_NAME }}:${{ env.GIT_REF }}-${{ env.GIT_SHA }}
           ${{ env.IMAGE_NAME }}:${{ env.GIT_SHA }}
-        outputs: type=docker,dest=/tmp/test-hello-world-image.tar
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        outputs: type=docker,dest=/tmp/images/image.tar
 
-    - name: Upload image artifact
-      uses: actions/upload-artifact@v2
+    - name: Cache images dir
+      uses: actions/cache@v2
       with:
-        name: test-hello-world-image
-        path: /tmp/test-hello-world-image.tar
-        retention-days: 1
+        path: /tmp/images
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-${{ github.sha }}
 
   lint:
     runs-on: ubuntu-20.04
@@ -66,61 +71,70 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
 
-    - name: Download image artifact
-      uses: actions/download-artifact@v2
+    - name: Restore images dir
+      uses: actions/cache@v2
       with:
-        name: test-hello-world-image
-        path: /tmp
+        path: /tmp/images
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-${{ github.sha }}
 
     - name: Run Lint
       run: |
-        docker load --input /tmp/test-hello-world-image.tar
-        docker run --rm ${IMAGE_NAME}:${GIT_REF} echo "Hello from lint"
+        docker load --input /tmp/images/image.tar
+        docker run --rm ${IMAGE_NAME}:${GIT_REF} make lint
 
-  test:
-    runs-on: ubuntu-20.04
-    needs: build
-    steps:
-    - name: Git Checkout
-      uses: actions/checkout@v2
+    - name: Upload Lint Results
+      uses: actions/upload-artifact@v2
+      if: always()
       with:
-        ref: ${{ github.event.pull_request.head.sha }}
+        name: lint-report.txt
+        path: ${GITHUB_WORKSPACE}/lint-report.txt
 
-    - name: Set environment variable(s)
-      run: |
-        echo "GIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-        echo "GIT_COMMITTED_AT=$(git show -s --format=%ct $GIT_COMMIT_SHA)" >> $GITHUB_ENV
+  # test:
+  #   runs-on: ubuntu-20.04
+  #   needs: build
+  #   steps:
+  #   - name: Git Checkout
+  #     uses: actions/checkout@v2
+  #     with:
+  #       ref: ${{ github.event.pull_request.head.sha }}
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+  #   - name: Set environment variable(s)
+  #     run: |
+  #       echo "GIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+  #       echo "GIT_COMMITTED_AT=$(git show -s --format=%ct $GIT_COMMIT_SHA)" >> $GITHUB_ENV
 
-    - name: Download image artifact
-      uses: actions/download-artifact@v2
-      with:
-        name: test-hello-world-image
-        path: /tmp
+  #   - name: Set up Docker Buildx
+  #     uses: docker/setup-buildx-action@v1
 
-    - name: Run Tests
-      run: |
-        docker load --input /tmp/test-hello-world-image.tar
-        docker run ${IMAGE_NAME}:${GIT_REF} echo "Hello from test" > test2.txt
-        docker run --rm ${IMAGE_NAME}:${GIT_REF} ls -al
-        ls -al
+  #   - name: Download image artifact
+  #     uses: actions/download-artifact@v2
+  #     with:
+  #       name: test-hello-world-image
+  #       path: /tmp
 
-    - uses: actions/upload-artifact@v2
-      continue-on-error: true
-      with:
-        path: .
-        name: test2.txt
+  #   - name: Run Tests
+  #     run: |
+  #       docker load --input /tmp/test-hello-world-image.tar
+  #       docker run ${IMAGE_NAME}:${GIT_REF} echo "Hello from test" > test2.txt
+  #       docker run --rm ${IMAGE_NAME}:${GIT_REF} ls -al
+  #       ls -al
 
-  cleanup:
-    needs: [lint, test]
-    continue-on-error: true
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Delete artifacts
-        uses: jimschubert/delete-artifacts-action@v1
-        with:
-          log_level: 'debug'
-          min_bytes: '0'
-          pattern: '\-image'
+  #   - uses: actions/upload-artifact@v2
+  #     continue-on-error: true
+  #     with:
+  #       path: .
+  #       name: test2.txt
+
+  # cleanup:
+  #   needs: [lint, test]
+  #   continue-on-error: true
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - name: Delete artifacts
+  #       uses: jimschubert/delete-artifacts-action@v1
+  #       with:
+  #         log_level: 'debug'
+  #         min_bytes: '0'
+  #         pattern: '\-image'
