@@ -1,9 +1,10 @@
-name: "Pull Request Labeler"
+name: PR Labeler
+# Uses the .github/labeler.yml file
 
 on: pull_request_target
 
 jobs:
-  triage:
+  label:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/labeler@v3
