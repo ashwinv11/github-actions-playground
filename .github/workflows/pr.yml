@@ -82,7 +82,7 @@ jobs:
     - name: Run Lint
       run: |
         docker load --input /tmp/images/image.tar
-        docker run --rm ${IMAGE_NAME}:${GIT_REF} make test2
+        docker run --rm ${IMAGE_NAME}:${GIT_REF} make lint
 
     - name: Upload Lint Results
       uses: actions/upload-artifact@v2
