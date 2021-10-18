@@ -1,2 +1,2 @@
 def something(good):
-  p =           "hello"
+  p = "hello"
