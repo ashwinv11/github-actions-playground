@@ -6,4 +6,7 @@ RUN apt-get update  && \
 
 WORKDIR /opt/workdir
 
+COPY ./requirements-dev.txt .
+RUN python -OO -m pip install --no-cache -r requirements-dev.txt
+
 COPY . ./

@@ -1,3 +1,2 @@
 #!/bin/bash
-printf ">>> Test 2\n"
-exit 1
+flake8 --tee --output-file=lint-report.txt
