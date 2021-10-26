@@ -12,6 +12,8 @@ jobs:
       - uses: actions/github-script@v5
         with:
           script: |
+            const RETRIABLE_JOB_NAMES = ['build', 'lint', 'test', 'push']
+
             const prId = context.payload.issue.pull_request.url.split(`/pulls/`).pop()
             const repoName = context.payload.repository.name
             const repoOwner = context.payload.repository.owner.login
@@ -44,11 +46,9 @@ jobs:
               ref: headSHA,
             });
 
-            console.log('data', getCheckRunsResult.data)
-
-            console.log('output', getCheckRunsResult.data.check_runs.map(datum => datum.output))
-
-            const githubActionsCheckSuiteId = getCheckSuitesResult.data.check_suites.filter(suite => suite.app.slug === 'github-actions')[0].id
+            const githubActionsCheckSuiteId = getCheckRunsResult.data.check_runs.find(checkRun =>
+              RETRIABLE_JOB_NAMES.includes(checkRun.name)
+            ).check_suite.id
 
             if(!githubActionsCheckSuiteId) {
               throw new Error(`Could not get last Check Suite Id: ${githubActionsCheckSuiteId}`)
