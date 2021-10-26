@@ -17,6 +17,13 @@ env:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        include:
+          - environment: "dev"
+            access_key: "AWS_ACCESS_KEY_ID_DEV"
+            secret_key: "AWS_SECRET_ACCESS_KEY_DEV"
+            account_id: "AWS_ACCOUNT_ID_DEV"
     steps:
     - name: Git Checkout
       uses: actions/checkout@v2
@@ -58,6 +65,13 @@ jobs:
   lint:
     runs-on: ubuntu-20.04
     needs: build
+    strategy:
+      matrix:
+        include:
+          - environment: "dev"
+            access_key: "AWS_ACCESS_KEY_ID_DEV"
+            secret_key: "AWS_SECRET_ACCESS_KEY_DEV"
+            account_id: "AWS_ACCOUNT_ID_DEV"
     steps:
     - name: Git Checkout
       uses: actions/checkout@v2
