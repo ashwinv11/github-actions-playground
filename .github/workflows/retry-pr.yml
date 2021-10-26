@@ -46,7 +46,7 @@ jobs:
 
             console.log('data', getCheckRunsResult.data)
 
-            console.log('output', getCheckRunsResult.data.map(datum => datum.output))
+            console.log('output', getCheckRunsResult.data.check_runs.map(datum => datum.output))
 
             const githubActionsCheckSuiteId = getCheckSuitesResult.data.check_suites.filter(suite => suite.app.slug === 'github-actions')[0].id
 
