@@ -38,7 +38,13 @@ jobs:
               ref: headSHA,
             });
 
-            console.log('data', getCheckSuitesResult.data.check_suites)
+            const getCheckRunsResult = await github.rest.checks.listForRef({
+              owner: repoOwner,
+              repo: repoName,
+              ref: headSHA,
+            });
+
+            console.log('data', getCheckRunsResult.data)
 
             const githubActionsCheckSuiteId = getCheckSuitesResult.data.check_suites.filter(suite => suite.app.slug === 'github-actions')[0].id
 
