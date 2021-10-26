@@ -38,6 +38,8 @@ jobs:
               ref: headSHA,
             });
 
+            console.log('data', getCheckSuitesResult.data.check_suites)
+
             const githubActionsCheckSuiteId = getCheckSuitesResult.data.check_suites.filter(suite => suite.app.slug === 'github-actions')[0].id
 
             if(!githubActionsCheckSuiteId) {
