@@ -7,14 +7,6 @@ on:
 jobs:
   validate-pr-title:
     runs-on: ubuntu-20.04
-    if: ${{ !contains(github.event.pull_request.title, 'CN-') }}
+    # if: ${{ !contains(github.event.pull_request.title, 'CN-') }}
     steps:
-      - uses: actions/github-script@v5
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.payload.pull_request.number,
-              owner: context.payload.repository.owner.login,
-              repo: context.payload.repository.name,
-              body: `👋 Don't forget to add a JIRA ticket to your PR title and description!`
-            })
+      - uses: ./.github/actions/validate-pr
