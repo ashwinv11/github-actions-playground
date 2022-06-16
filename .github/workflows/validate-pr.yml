@@ -9,4 +9,9 @@ jobs:
     runs-on: ubuntu-20.04
     # if: ${{ !contains(github.event.pull_request.title, 'CN-') }}
     steps:
+      - name: Git Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
       - uses: ./.github/actions/validate-pr
